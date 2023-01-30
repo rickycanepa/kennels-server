@@ -1,16 +1,16 @@
 import sqlite3
 import json
-from models import Employee, Location
+from models import Customer
 
-EMPLOYEES = [
+CUSTOMERS = [
     {
         "id": 1,
-        "name": "Jenna Solis",
+        "name": "Ryan Tanay",
         "status": "Silly"
     }
 ]
 
-def get_all_employees():
+def get_all_customers():
     # Open a connection to the database
     with sqlite3.connect("./kennel.sqlite3") as conn:
 
@@ -24,16 +24,13 @@ def get_all_employees():
             a.id,
             a.name,
             a.address,
-            a.location_id,
-            b.name location_name,
-            b.address location_address
-        FROM Employee a
-        JOIN Location b
-            ON b.id = a.location_id
+            a.email,
+            a.password
+        FROM customer a
         """)
 
         # Initialize an empty list to hold all animal representations
-        employees = []
+        customers = []
 
         # Convert rows of data into a Python list
         dataset = db_cursor.fetchall()
@@ -45,18 +42,15 @@ def get_all_employees():
             # Note that the database fields are specified in
             # exact order of the parameters defined in the
             # Animal class above.
-            employee = Employee(row['id'], row['name'], row['address'],
-                                row['location_id'])
+            customer = Customer(row['id'], row['name'],
+                            row['address'], row['email'],
+                            row['password'])
 
-            location = Location(row['id'], row['location_name'], row['location_address'])
+            customers.append(customer.__dict__)
 
-            employee.location = location.__dict__
+    return customers
 
-            employees.append(employee.__dict__)
-
-    return employees
-
-def get_single_employee(id):
+def get_single_customer(id):
     with sqlite3.connect("./kennel.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
@@ -68,8 +62,9 @@ def get_single_employee(id):
             a.id,
             a.name,
             a.address,
-            a.location_id
-        FROM employee a
+            a.email,
+            a.password
+        FROM customer a
         WHERE a.id = ?
         """, ( id, ))
 
@@ -77,52 +72,53 @@ def get_single_employee(id):
         data = db_cursor.fetchone()
 
         # Create an animal instance from the current row
-        employee = Employee(data['id'], data['name'], data['address'],
-                            data['location_id'])
+        customer = Customer(data['id'], data['name'],
+                            data['address'], data['email'],
+                            data['password'])
 
-        return employee.__dict__
+        return customer.__dict__
 
-def create_employee(employee):
+def create_customer(customer):
     # Get the id value of the last animal in the list
-    max_id = EMPLOYEES[-1]["id"]
+    max_id = CUSTOMERS[-1]["id"]
 
     # Add 1 to whatever that number is
     new_id = max_id + 1
 
     # Add an `id` property to the animal dictionary
-    employee["id"] = new_id
+    customer["id"] = new_id
 
     # Add the animal dictionary to the list
-    EMPLOYEES.append(employee)
+    CUSTOMERS.append(customer)
 
     # Return the dictionary with `id` property added
-    return employee
+    return customer
 
-def delete_employee(id):
+def delete_customer(id):
     # Initial -1 value for animal index, in case one isn't found
-    employee_index = -1
+    customer_index = -1
 
     # Iterate the ANIMALS list, but use enumerate() so that you
     # can access the index value of each item
-    for index, employee in enumerate(EMPLOYEES):
-        if employee["id"] == id:
+    for index, customer in enumerate(CUSTOMERS):
+        if customer["id"] == id:
             # Found the animal. Store the current index.
-            employee_index = index
+            customer_index = index
 
     # If the animal was found, use pop(int) to remove it from list
-    if employee_index >= 0:
-        EMPLOYEES.pop(employee_index)
+    if customer_index >= 0:
+        CUSTOMERS.pop(customer_index)
 
-def update_employee(id, new_employee):
+def update_customer(id, new_customer):
     # Iterate the ANIMALS list, but use enumerate() so that
     # you can access the index value of each item.
-    for index, employee in enumerate(EMPLOYEES):
-        if employee["id"] == id:
+    for index, customer in enumerate(CUSTOMERS):
+        if customer["id"] == id:
             # Found the animal. Update the value.
-            EMPLOYEES[index] = new_employee
+            CUSTOMERS[index] = new_customer
             break
 
-def get_employees_by_location(location_id):
+def get_customers_by_email(email):
 
     with sqlite3.connect("./kennel.sqlite3") as conn:
         conn.row_factory = sqlite3.Row
@@ -134,16 +130,17 @@ def get_employees_by_location(location_id):
             c.id,
             c.name,
             c.address,
-            c.location_id
-        from Employee c
-        WHERE c.location_id = ?
-        """, ( location_id, ))
+            c.email,
+            c.password
+        from Customer c
+        WHERE c.email = ?
+        """, ( email, ))
 
-        employees = []
+        customers = []
         dataset = db_cursor.fetchall()
 
         for row in dataset:
-            employee = Employee(row['id'], row['name'], row['address'], row['location_id'])
-            employees.append(employee.__dict__)
+            customer = Customer(row['id'], row['name'], row['address'], row['email'] , row['password'])
+            customers.append(customer.__dict__)
 
-    return employees
+    return customers
